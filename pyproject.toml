@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "azure-metrics"
+version = "0.1.0"
+description = "Capturar informações da sprint na azure"
+authors = ["Leonam Mendonça <leonam.pereira@finnet.com.br>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.32.3"
+pandas = "^2.2.3"
+numpy = "^2.2.5"
+matplotlib = "^3.10.3"
+seaborn = "^0.13.2"
+python-dotenv = "^1.1.0"
+streamlit = "^1.45.1"
+plotly = "^6.1.0"
+jinja2 = "^3.1.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
