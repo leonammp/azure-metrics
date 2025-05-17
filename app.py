@@ -1,11 +1,10 @@
 import streamlit as st
 import os
-from pathlib import Path
 
 from src.data.azure_client import AzureDevOpsClient
 from src.analysis.sprint_analyzer import SprintAnalyzer
 from src.analysis.report_generator import ReportGenerator
-from src.ui.components import init_session_state, render_sidebar, get_download_link
+from src.ui.components import init_session_state, render_sidebar
 from src.ui.pages import render_sprint_analysis_page, render_distribution_analysis_page
 
 # Configuração do logger

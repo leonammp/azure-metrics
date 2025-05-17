@@ -1,7 +1,6 @@
 import streamlit as st
 import base64
 import os
-from pathlib import Path
 
 
 def init_session_state():
