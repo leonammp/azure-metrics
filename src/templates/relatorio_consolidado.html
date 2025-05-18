@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Relatório Consolidado de Sprints</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: #0078d4;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0078d4;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .warning {
+            color: #e74c3c;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .image-container {
+            margin: 20px 0;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            height: 20px;
+            border-radius: 4px;
+            background-color: #4CAF50;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .stat {
+            font-weight: bold;
+        }
+
+        .sprint-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 25px 0;
+        }
+
+        .sprint-title {
+            background-color: #0078d4;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .sprint-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .collapsible {
+            background-color: #f1f1f1;
+            color: #444;
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        .active,
+        .collapsible:hover {
+            background-color: #ddd;
+        }
+
+        .content {
+            padding: 0 18px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background-color: #f9f9f9;
+            border-radius: 0 0 5px 5px;
+        }
+
+        @media print {
+
+            .card,
+            .sprint-section {
+                break-inside: avoid;
+            }
+
+            .image-container {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Relatório Consolidado de Sprints</h1>
+    <h2>Sprints: {{ sprints|join(", ") }}</h2>
+
+    <div class="dashboard">
+        <div class="card">
+            <div class="metric">{{ insights.total_sprints }}</div>
+            <div class="metric-label">Total de Sprints Analisadas</div>
+        </div>
+        <div class="card">
+            <div class="metric">{{ insights.total_itens }}</div>
+            <div class="metric-label">Total de Itens de Trabalho</div>
+        </div>
+        <div class="card">
+            <div class="metric">{{ insights.total_esforco }}</div>
+            <div class="metric-label">Pontos de Esforço Total</div>
+        </div>
+        <div class="card">
+            <div class="metric">{{ "%.1f"|format(insights.media_percentual_concluido) }}%</div>
+            <div class="metric-label">Taxa Média de Conclusão</div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO: Análise de Chamados -->
+    <h3>Análise de Chamados</h3>
+    <div class="card">
+        <div class="stats-container">
+            <div class="stat">Total de Chamados: {{ insights.total_chamados|default(0) }}</div>
+            <div class="stat">Chamados Concluídos: {{ insights.chamados_concluidos|default(0) }}</div>
+            <div class="stat">Percentual: {{ "%.1f"|format((insights.chamados_concluidos|default(0) /
+                insights.total_chamados|default(1) * 100) if insights.total_chamados|default(0) > 0 else 0) }}%</div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar"
+                style="width: {{ (insights.chamados_concluidos|default(0) / insights.total_chamados|default(1) * 100) if insights.total_chamados|default(0) > 0 else 0 }}%">
+            </div>
+        </div>
+        <p>Ao longo das {{ insights.total_sprints }} sprints analisadas, foram registrados <strong>{{
+                insights.total_chamados|default(0) }}</strong> chamados,
+            dos quais <strong>{{ insights.chamados_concluidos|default(0) }}</strong> foram concluídos.</p>
+    </div>
+
+    <h3>Resumo Consolidado</h3>
+    <p>
+        Este relatório analisa um total de {{ insights.total_sprints }} sprints, contendo {{ insights.total_itens }}
+        itens de trabalho
+        com um esforço total de {{ insights.total_esforco }} pontos.
+    </p>
+    <p>
+        Em média, cada sprint contém {{ "%.1f"|format(insights.media_itens_sprint) }} itens de trabalho com {{
+        "%.1f"|format(insights.media_esforco_sprint) }} pontos de esforço.
+        A taxa média de conclusão foi de {{ "%.1f"|format(insights.media_percentual_concluido) }}%.
+    </p>
+    <p>
+        Ao longo dessas sprints, ocorreram em média {{ "%.1f"|format(insights.media_retornos_por_sprint) }} retornos por
+        sprint,
+        o que sugere um determinado nível de retrabalho no processo de desenvolvimento.
+    </p>
+
+    <h3>Tendências ao Longo das Sprints</h3>
+
+    <h4>Tendência de Conclusão</h4>
+    <div class="image-container">
+        <img src="data:image/png;base64,{{ imagens.tendencia_conclusao|default('') }}" alt="Tendência de Conclusão">
+    </div>
+
+    <h4>Tendência de Esforço</h4>
+    <div class="image-container">
+        <img src="data:image/png;base64,{{ imagens.tendencia_esforco|default('') }}" alt="Tendência de Esforço">
+    </div>
+
+    <h3>Comparação Entre Sprints</h3>
+    <table>
+        <tr>
+            <th>Sprint</th>
+            <th>Itens</th>
+            <th>Esforço</th>
+            <th>Taxa de Conclusão</th>
+            <th>Chamados</th>
+            <th>Retornos</th>
+        </tr>
+        {% for sprint in sprints %}
+        <tr>
+            <td>{{ sprint }}</td>
+            <td>{{ insights.por_sprint[sprint].total_itens }}</td>
+            <td>{{ insights.por_sprint[sprint].esforco_total }}</td>
+            <td>{{ "%.1f"|format(insights.por_sprint[sprint].percentual_concluido) }}%</td>
+            <td>{{ insights.por_sprint[sprint].total_chamados|default(0) }}</td>
+            <td>{{ insights.por_sprint[sprint].retornos }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Recomendações</h3>
+    <ul>
+        <li>Analisar tendências de conclusão para identificar melhorias ou regressões no processo ao longo do tempo</li>
+        <li>Comparar o esforço estimado entre sprints para verificar consistência no planejamento</li>
+        <li>Investigar sprints com taxas de conclusão significativamente abaixo da média ({{
+            "%.1f"|format(insights.media_percentual_concluido) }}%)</li>
+        <li>Avaliar sprint com maior número de retornos para identificar causas de retrabalho</li>
+        <li>Revisar a capacidade da equipe baseada na tendência de esforço total por sprint</li>
+    </ul>
+
+    <!-- NOVA SEÇÃO: Detalhes por Sprint -->
+    <h3>Detalhes por Sprint</h3>
+    <p>Clique em cada sprint para ver seus gráficos detalhados.</p>
+
+    {% for sprint in sprints %}
+    <button class="collapsible">{{ sprint }}</button>
+    <div class="content">
+        <div class="sprint-section">
+            <div class="sprint-title">{{ sprint }}</div>
+
+            <h4>Itens de Trabalho por Tipo</h4>
+            <div class="image-container">
+                <img src="data:image/png;base64,{{ imagens[sprint + '_itens_por_tipo']|default('') }}"
+                    alt="Itens por Tipo">
+            </div>
+
+            <h4>Distribuição de Estado Atual</h4>
+            <div class="image-container">
+                <img src="data:image/png;base64,{{ imagens[sprint + '_itens_por_estado']|default('') }}"
+                    alt="Itens por Estado">
+            </div>
+
+            <div class="sprint-grid">
+                <div>
+                    <h4>Carga de Trabalho por Responsável</h4>
+                    <div class="image-container">
+                        <img src="data:image/png;base64,{{ imagens[sprint + '_itens_por_responsavel']|default('') }}"
+                            alt="Itens por Responsável">
+                    </div>
+                </div>
+                <div>
+                    <h4>Esforço por Responsável</h4>
+                    <div class="image-container">
+                        <img src="data:image/png;base64,{{ imagens[sprint + '_esforco_por_responsavel']|default('') }}"
+                            alt="Esforço por Responsável">
+                    </div>
+                </div>
+            </div>
+
+            <h4>Tempo Médio em Coluna</h4>
+            <div class="image-container">
+                <img src="data:image/png;base64,{{ imagens[sprint + '_tempo_medio_coluna']|default('') }}"
+                    alt="Tempo Médio em Coluna">
+            </div>
+
+            <div class="sprint-grid">
+                <div>
+                    <h4>Adições no Meio da Sprint</h4>
+                    <div class="image-container">
+                        <img src="data:image/png;base64,{{ imagens[sprint + '_adicoes_meio_sprint']|default('') }}"
+                            alt="Adições no Meio da Sprint">
+                    </div>
+                </div>
+                <div>
+                    <h4>Retornos</h4>
+                    <div class="image-container">
+                        <img src="data:image/png;base64,{{ imagens[sprint + '_retornos']|default('') }}" alt="Retornos">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <p><em>Relatório gerado em {{ data_geracao }} pelo time de Payments 💙 | Sistema Boletinho Analytics</em></p>
+
+    <script>
+        // Script para os elementos colapsáveis
+        var coll = document.getElementsByClassName("collapsible");
+        for (var i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

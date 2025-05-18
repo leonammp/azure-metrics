@@ -184,3 +184,89 @@ def render_category_cards(distribuicao_esforco, distribuicao_qtd, metas):
                 gerar_card_categoria(categoria, esforco, quantidade, meta),
                 unsafe_allow_html=True,
             )
+
+
+def sprint_selector(sprint_names, key_prefix="sprint"):
+    """
+    Componente para seleção de múltiplas sprints com badges.
+
+    Parameters
+    ----------
+    sprint_names : list
+        Lista de nomes de sprints disponíveis
+    key_prefix : str
+        Prefixo para chaves do session_state
+
+    Returns
+    -------
+    list
+        Lista de sprints selecionadas
+    """
+    # Inicializa a lista de sprints selecionadas no session_state se não existir
+    if f"{key_prefix}_selected" not in st.session_state:
+        st.session_state[f"{key_prefix}_selected"] = []
+
+    # Dropdown para selecionar sprint
+    col1, col2, col3 = st.columns([1, 1, 3])
+
+    with col1:
+        available_sprints = [
+            s
+            for s in sprint_names
+            if s not in st.session_state[f"{key_prefix}_selected"]
+        ]
+        if not available_sprints:
+            available_sprints = ["Todas as sprints já estão selecionadas"]
+
+        selected_sprint = st.selectbox(
+            "Selecione a Sprint:",
+            available_sprints,
+            key=f"{key_prefix}_dropdown",
+        )
+
+    with col2:
+        # Botão para adicionar sprint à lista de selecionadas
+        is_disabled = (
+            selected_sprint is None
+            or selected_sprint == "Todas as sprints já estão selecionadas"
+        )
+        # Espaço vertical para alinhar com o select
+        st.markdown('<div style="padding-top: 27px;"></div>', unsafe_allow_html=True)
+        if st.button("Adicionar", key=f"{key_prefix}_add", disabled=is_disabled):
+            if (
+                selected_sprint
+                and selected_sprint not in st.session_state[f"{key_prefix}_selected"]
+            ):
+                st.session_state[f"{key_prefix}_selected"].append(selected_sprint)
+                # Força atualização da UI usando st.rerun em vez de experimental_rerun
+                st.rerun()
+
+    # Exibe badges das sprints selecionadas
+    if st.session_state[f"{key_prefix}_selected"]:
+        st.write("Sprints selecionadas:")
+
+        # Layout para os badges
+        cols = st.columns(4)
+
+        # Distribui os badges entre as colunas
+        for i, sprint in enumerate(st.session_state[f"{key_prefix}_selected"]):
+            with cols[i % len(cols)]:
+                col_badge, col_remove = st.columns([3, 1])
+                with col_badge:
+                    st.markdown(
+                        f"""
+                        <div style="background-color: #0078d4; color: white; padding: 5px 10px; 
+                                   border-radius: 15px; margin: 5px 0; text-align: center;">
+                            {sprint}
+                        </div>
+                    """,
+                        unsafe_allow_html=True,
+                    )
+
+                with col_remove:
+                    if st.button("×", key=f"remove_{sprint}", help=f"Remover {sprint}"):
+                        st.session_state[f"{key_prefix}_selected"].remove(sprint)
+                        # Força atualização da UI usando st.rerun em vez de experimental_rerun
+                        st.rerun()
+
+    return st.session_state[f"{key_prefix}_selected"]

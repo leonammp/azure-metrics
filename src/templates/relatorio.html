@@ -73,12 +73,20 @@
 
         .image-container {
             margin: 20px 0;
+            max-width: 100%;
+            /* Limita a largura do contêiner */
+            overflow: hidden;
+            /* Previne que a imagem extravase o contêiner */
         }
 
         img {
             max-width: 100%;
             height: auto;
             border-radius: 4px;
+            display: block;
+            /* Torna a imagem um bloco */
+            margin: 0 auto;
+            /* Centraliza a imagem */
         }
 
         .progress-container {

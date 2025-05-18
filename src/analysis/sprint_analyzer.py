@@ -81,6 +81,183 @@ class SprintAnalyzer:
 
         return insights, pasta_saida
 
+    def analisar_multiplas_sprints(self, nomes_sprints):
+        """
+        Analisa múltiplas sprints e gera relatório consolidado.
+
+        Parameters
+        ----------
+        nomes_sprints : list
+            Lista de nomes das sprints a serem analisadas
+
+        Returns
+        -------
+        tuple
+            (insights_consolidados, pasta_saida)
+        """
+        logger.info(
+            f"Analisando {len(nomes_sprints)} sprints: {', '.join(nomes_sprints)}"
+        )
+
+        # Cria pasta para o relatório consolidado
+        pasta_saida = self.pasta_base_saida / "consolidado"
+        pasta_saida.mkdir(exist_ok=True, parents=True)
+
+        # Armazena insights de cada sprint
+        todos_insights = []
+        todas_metricas = {}
+
+        # Dados brutos consolidados
+        df_consolidado = None
+
+        # Analisa cada sprint individualmente
+        for nome_sprint in nomes_sprints:
+            insights, pasta_sprint = self.analisar_sprint(nome_sprint)
+            todos_insights.append(insights)
+
+            # Copia os gráficos gerados para a pasta consolidada
+            self._copiar_graficos_sprint(pasta_sprint, pasta_saida, nome_sprint)
+
+            # Acumula dados brutos
+            csv_path = pasta_sprint / "detalhes_completos.csv"
+            if csv_path.exists():
+                df_sprint = pd.read_csv(csv_path)
+                # Adiciona coluna com nome da sprint
+                df_sprint["Sprint"] = nome_sprint
+
+                if df_consolidado is None:
+                    df_consolidado = df_sprint
+                else:
+                    df_consolidado = pd.concat(
+                        [df_consolidado, df_sprint], ignore_index=True
+                    )
+
+        # Salva dados brutos consolidados
+        if df_consolidado is not None:
+            df_consolidado.to_csv(
+                pasta_saida / "detalhes_consolidados.csv",
+                index=False,
+                encoding="utf-8-sig",
+            )
+
+        # Consolida métricas
+        insights_consolidados = self._consolidar_insights(todos_insights, nomes_sprints)
+
+        # Salva os insights consolidados
+        with open(pasta_saida / "insights_consolidados.json", "w") as f:
+            json.dump(insights_consolidados, f)
+
+        return insights_consolidados, pasta_saida
+
+    def _copiar_graficos_sprint(self, pasta_origem, pasta_destino, nome_sprint):
+        """
+        Copia os gráficos de uma sprint para a pasta consolidada, renomeando-os com prefixo.
+
+        Parameters
+        ----------
+        pasta_origem : Path
+            Pasta com os gráficos da sprint
+        pasta_destino : Path
+            Pasta de destino (consolidado)
+        nome_sprint : str
+            Nome da sprint para usar como prefixo
+        """
+        # Nomes de arquivos a copiar
+        arquivos_graficos = [
+            "itens_por_tipo.png",
+            "itens_por_estado.png",
+            "itens_por_responsavel.png",
+            "esforco_por_responsavel.png",
+            "tempo_medio_coluna.png",
+            "adicoes_meio_sprint.png",
+            "retornos.png",
+        ]
+
+        import shutil
+
+        for arquivo in arquivos_graficos:
+            caminho_origem = pasta_origem / arquivo
+            if caminho_origem.exists():
+                # Substitui espaços e caracteres especiais no nome da sprint para evitar problemas no nome do arquivo
+                nome_safe = (
+                    nome_sprint.replace(" ", "_").replace("/", "_").replace("\\", "_")
+                )
+                caminho_destino = pasta_destino / f"{nome_safe}_{arquivo}"
+                shutil.copy2(caminho_origem, caminho_destino)
+
+    def _consolidar_insights(self, lista_insights, nomes_sprints):
+        """
+        Consolida insights de múltiplas sprints em um único conjunto.
+
+        Parameters
+        ----------
+        lista_insights : list
+            Lista de dicionários de insights
+        nomes_sprints : list
+            Nomes das sprints correspondentes
+
+        Returns
+        -------
+        dict
+            Insights consolidados
+        """
+        consolidado = {
+            "sprints": nomes_sprints,
+            "total_sprints": len(nomes_sprints),
+            "por_sprint": {},
+            "total_itens": 0,
+            "media_itens_sprint": 0,
+            "total_esforco": 0,
+            "esforco_total": 0,  # Adicionando chave alternativa para compatibilidade
+            "media_esforco_sprint": 0,
+            "media_percentual_concluido": 0,
+            "percentual_concluido": 0,  # Adicionando chave alternativa para compatibilidade
+            "total_chamados": 0,
+            "chamados_concluidos": 0,
+            "media_retornos_por_sprint": 0,
+            "tendencia_conclusao": [],
+            "tendencia_esforco": [],
+        }
+
+        # Armazena dados por sprint e calcula totais
+        for i, insights in enumerate(lista_insights):
+            nome_sprint = nomes_sprints[i]
+            consolidado["por_sprint"][nome_sprint] = insights
+
+            # Acumula métricas
+            consolidado["total_itens"] += insights["total_itens"]
+            consolidado["total_esforco"] += insights["esforco_total"]
+            consolidado["media_percentual_concluido"] += insights[
+                "percentual_concluido"
+            ]
+            consolidado["total_chamados"] += insights.get("total_chamados", 0)
+            consolidado["chamados_concluidos"] += insights.get("chamados_concluidos", 0)
+            consolidado["media_retornos_por_sprint"] += insights["retornos"]
+
+            # Dados para tendências
+            consolidado["tendencia_conclusao"].append(
+                {"sprint": nome_sprint, "percentual": insights["percentual_concluido"]}
+            )
+            consolidado["tendencia_esforco"].append(
+                {"sprint": nome_sprint, "esforco": insights["esforco_total"]}
+            )
+
+        # Calcula médias
+        n_sprints = len(lista_insights)
+        if n_sprints > 0:
+            consolidado["media_itens_sprint"] = consolidado["total_itens"] / n_sprints
+            consolidado["media_esforco_sprint"] = (
+                consolidado["total_esforco"] / n_sprints
+            )
+            consolidado["media_percentual_concluido"] /= n_sprints
+            consolidado["media_retornos_por_sprint"] /= n_sprints
+
+        # Ordena tendências por nome da sprint
+        consolidado["tendencia_conclusao"].sort(key=lambda x: x["sprint"])
+        consolidado["tendencia_esforco"].sort(key=lambda x: x["sprint"])
+
+        return consolidado
+
     def analisar_distribuicao_tasks(self, nome_sprint):
         """
         Analisa a distribuição atual das tasks da sprint por categoria.
@@ -505,6 +682,8 @@ class SprintAnalyzer:
         """Analisa métricas básicas dos itens."""
         insights["total_itens"] = len(dados_processados)
         itens_concluidos = 0
+        esforco_concluido = 0
+        esforco_total = 0
 
         for item in dados_processados:
             # Conta por tipo
@@ -523,13 +702,16 @@ class SprintAnalyzer:
             concluido = estado == "Done" or estado == self.colunas_estados["Concluído"]
             if concluido:
                 itens_concluidos += 1
+                esforco_concluido += item["esforco"] or 0
 
             # Conta adições no meio da sprint
             if item["adicionado_meio_sprint"]:
                 insights["adicoes_meio_sprint"] += 1
 
             # Soma esforço
-            insights["esforco_total"] += item["esforco"] or 0
+            item_esforco = item["esforco"] or 0
+            esforco_total += item_esforco
+            insights["esforco_total"] = esforco_total
 
             # Rastreia carga de trabalho por responsável
             responsavel = item["responsavel_atual"]
@@ -540,17 +722,29 @@ class SprintAnalyzer:
                 }
 
             insights["carga_trabalho_responsaveis"][responsavel]["contagem"] += 1
-            insights["carga_trabalho_responsaveis"][responsavel]["esforco"] += (
-                item["esforco"] or 0
-            )
+            insights["carga_trabalho_responsaveis"][responsavel][
+                "esforco"
+            ] += item_esforco
 
-        # Calcula percentual de conclusão
+        # Calcula percentual de conclusão baseado em quantidade de itens
         if insights["total_itens"] > 0:
             insights["percentual_concluido"] = (
                 itens_concluidos / insights["total_itens"]
             ) * 100
         else:
             insights["percentual_concluido"] = 0
+
+        # Calcula percentual de conclusão baseado em esforço
+        if esforco_total > 0:
+            insights["percentual_esforco_concluido"] = (
+                esforco_concluido / esforco_total
+            ) * 100
+        else:
+            insights["percentual_esforco_concluido"] = 0
+
+        # Armazena os valores absolutos para referência
+        insights["itens_concluidos"] = itens_concluidos
+        insights["esforco_concluido"] = esforco_concluido
 
         return insights
 
