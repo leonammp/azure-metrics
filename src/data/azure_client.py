@@ -166,7 +166,7 @@ class AzureDevOpsClient:
 
         return item_trabalho
 
-    def extract_sprint_data(self, nome_sprint, output_folder=None):
+    def extract_sprint_data(self, nome_sprint):
         """
         Extrai todos os dados de uma sprint, incluindo itens de trabalho e revisões.
 
@@ -174,8 +174,6 @@ class AzureDevOpsClient:
         ----------
         nome_sprint : str
             Nome da sprint
-        output_folder : Path, optional
-            Caminho para salvar os dados extraídos
 
         Returns
         -------
@@ -190,12 +188,8 @@ class AzureDevOpsClient:
         logger.info(f"Extraindo dados para a sprint: {nome_sprint}")
 
         # Define o diretório de saída, se fornecido
-        if output_folder:
-            pasta_saida = Path(output_folder) / nome_sprint
-            pasta_saida.mkdir(exist_ok=True, parents=True)
-        else:
-            pasta_saida = Path("analises_sprint") / nome_sprint
-            pasta_saida.mkdir(exist_ok=True, parents=True)
+        pasta_saida = Path("analises_sprint") / nome_sprint
+        pasta_saida.mkdir(exist_ok=True, parents=True)
 
         # Obtém a sprint
         sprint = self.get_sprint_by_name(nome_sprint)

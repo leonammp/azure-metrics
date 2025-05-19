@@ -288,9 +288,7 @@ class SprintAnalyzer:
                 "Título": item["fields"].get("System.Title", ""),
                 "Tipo": item["fields"].get("System.WorkItemType", ""),
                 "Estado": item["fields"].get("System.State", ""),
-                "Esforço": item["fields"].get(
-                    "Microsoft.VSTS.Scheduling.StoryPoints", 0
-                )
+                "Esforço": item["fields"].get("Microsoft.VSTS.Scheduling.Effort", 0)
                 or 0,
                 "Categoria": categoria,
             }
@@ -501,9 +499,7 @@ class SprintAnalyzer:
             estado = item["fields"]["System.State"]
 
             # Extrai pontos de esforço
-            esforco = (
-                item["fields"].get("Microsoft.VSTS.Scheduling.StoryPoints", 0) or 0
-            )
+            esforco = item["fields"].get("Microsoft.VSTS.Scheduling.Effort", 0) or 0
 
             # Extrai histórico de responsáveis
             historico_responsaveis = []
@@ -987,7 +983,7 @@ class SprintAnalyzer:
                 "Microsoft.VSTS.Common.Priority", ""
             )
             campos["Esforco"] = item["fields"].get(
-                "Microsoft.VSTS.Scheduling.StoryPoints", ""
+                "Microsoft.VSTS.Scheduling.Effort", ""
             )
             campos["Area_Path"] = item["fields"].get("System.AreaPath", "")
             campos["Iteration_Path"] = item["fields"].get("System.IterationPath", "")
