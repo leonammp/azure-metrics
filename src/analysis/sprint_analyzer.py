@@ -57,7 +57,9 @@ class SprintAnalyzer:
             para a pasta com os resultados
         """
         # Extrai dados da sprint
-        dados_brutos, pasta_saida = self.azure_client.extract_sprint_data(nome_sprint)
+        dados_brutos, pasta_saida = self.azure_client.extract_sprint_data(
+            nome_sprint, True
+        )
         arquivo_saida = pasta_saida / "dados_processados.json"
 
         # Verifica se já temos dados processados

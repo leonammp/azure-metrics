@@ -166,7 +166,7 @@ class AzureDevOpsClient:
 
         return item_trabalho
 
-    def extract_sprint_data(self, nome_sprint):
+    def extract_sprint_data(self, nome_sprint, forcar_update=False):
         """
         Extrai todos os dados de uma sprint, incluindo itens de trabalho e revisões.
 
@@ -190,6 +190,14 @@ class AzureDevOpsClient:
         # Define o diretório de saída, se fornecido
         pasta_saida = Path("analises_sprint") / nome_sprint
         pasta_saida.mkdir(exist_ok=True, parents=True)
+
+        # Verifica se o arquivo já existe
+        arquivo_saida = pasta_saida / "dados_brutos.json"
+        if arquivo_saida.exists() and not forcar_update:
+            logger.info(f"Arquivo de saída já existe: {arquivo_saida}")
+            with open(arquivo_saida, "r") as f:
+                dados_itens_trabalho = json.load(f)
+            return dados_itens_trabalho, pasta_saida
 
         # Obtém a sprint
         sprint = self.get_sprint_by_name(nome_sprint)
