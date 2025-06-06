@@ -227,10 +227,10 @@ def exibir_relatorio_com_dados_processados(
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Total de Itens", insights["total_itens"])
+        st.metric("Total de Itens na Sprint", insights["total_itens"])
 
     with col2:
-        st.metric("Pontos de Esforço", insights["esforco_total"])
+        st.metric("Pontos de Esforço Planejados", insights["esforco_total"])
 
     with col3:
         st.metric(
@@ -955,8 +955,6 @@ def render_dados_brutos_page(selected_sprints, analyzer, dados_processados=None)
         return
 
     # Usar diretamente os dados processados
-    insights = dados_processados["insights"]
-    pasta_saida = Path(dados_processados["pasta_saida"])
     selected_sprints = dados_processados["selected_sprints"]
     is_consolidado = dados_processados["is_consolidado"]
 

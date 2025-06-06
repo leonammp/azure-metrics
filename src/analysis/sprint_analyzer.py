@@ -107,7 +107,6 @@ class SprintAnalyzer:
 
         # Armazena insights de cada sprint
         todos_insights = []
-        todas_metricas = {}
 
         # Dados brutos consolidados
         df_consolidado = None
@@ -469,7 +468,7 @@ class SprintAnalyzer:
         tags = item["fields"].get("System.Tags", "").lower()
 
         # Determina categoria
-        if tipo.lower() in ["bug", "issue"] or "chamado" in tags:
+        if "chamado" in tags:
             return "Incidentes"
 
         categoria = mapeamento_categoria.get(value_area, "")
